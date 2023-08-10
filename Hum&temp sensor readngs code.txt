@@ -1,0 +1,34 @@
+#include "DHTesp.h"
+#include "HTTPServer.h"
+
+const int DHT_PIN = 15;
+
+DHTesp dhtSensor;
+HTTPServer server(80);
+
+void setup() {
+  Serial.begin(115200);
+  dhtSensor.setup(DHT_PIN, DHTesp::DHT22);
+
+  // Initialize the HTTP server
+  server.on("/", handleRoot);
+  server.begin();
+}
+
+void loop() {
+  // Check for new sensor readings
+  TempAndHumidity  data = dhtSensor.getTempAndHumidity();
+
+  // Send the sensor data to the client
+  server.send(200, "text/plain", String(data.temperature, 2) + "," + String(data.humidity, 1));
+
+  delay(2000); // Wait for a new reading from the sensor (DHT22 has ~0.5Hz sample rate)
+}
+
+void handleRoot() {
+  // Get the sensor data
+  TempAndHumidity  data = dhtSensor.getTempAndHumidity();
+
+  // Send the sensor data back to the client
+  server.send(200, "text/plain", String(data.temperature, 2) + "," + String(data.humidity, 1));
+}
